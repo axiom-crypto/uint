@@ -35,6 +35,7 @@
 #[macro_use]
 extern crate alloc;
 
+
 #[macro_use]
 mod macros;
 
@@ -141,7 +142,16 @@ pub mod nightly {
 ///   requires same-sized arguments and returns a pair of lower and higher bits.
 ///
 /// [std-overflow]: https://doc.rust-lang.org/reference/expressions/operator-expr.html#overflow
+#[cfg(not(target_os = "zkvm"))]
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
+#[repr(transparent)]
+pub struct Uint<const BITS: usize, const LIMBS: usize> {
+    limbs: [u64; LIMBS],
+}
+
+/// In case of zkvm, we use the native implementations of `Clone` and `Eq`
+#[cfg(target_os = "zkvm")]
+#[derive(Hash)]
 #[repr(transparent)]
 pub struct Uint<const BITS: usize, const LIMBS: usize> {
     limbs: [u64; LIMBS],
