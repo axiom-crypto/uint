@@ -158,7 +158,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         use crate::support::zkvm::wrapping_add_impl;
         if BITS == 256 {
             unsafe {
-                wrapping_add_impl(self.limbs.as_ptr(), rhs.limbs.as_ptr(), self.limbs.as_mut_ptr());
+                wrapping_add_impl(
+                    self.limbs.as_ptr(),
+                    rhs.limbs.as_ptr(),
+                    self.limbs.as_mut_ptr(),
+                );
             }
             return self;
         }
@@ -197,7 +201,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         use crate::support::zkvm::wrapping_sub_impl;
         if BITS == 256 {
             unsafe {
-                wrapping_sub_impl(self.limbs.as_ptr(), rhs.limbs.as_ptr(), self.limbs.as_mut_ptr());
+                wrapping_sub_impl(
+                    self.limbs.as_ptr(),
+                    rhs.limbs.as_ptr(),
+                    self.limbs.as_mut_ptr(),
+                );
             }
             return self;
         }
