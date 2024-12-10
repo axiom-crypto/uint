@@ -278,10 +278,36 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note: This differs from [`u64::wrapping_shl`] which first reduces `rhs`
     /// by `BITS` (which is IMHO not very useful).
+    #[cfg(not(target_os = "zkvm"))]
     #[inline(always)]
     #[must_use]
     pub fn wrapping_shl(self, rhs: usize) -> Self {
         self.overflowing_shl(rhs).0
+    }
+
+    /// Left shift by `rhs` bits.
+    ///
+    /// Returns $\mod{\mathtt{value} ⋅ 2^{\mathtt{rhs}}}_{2^{\mathtt{BITS}}}$.
+    ///
+    /// Note: This differs from [`u64::wrapping_shl`] which first reduces `rhs`
+    /// by `BITS` (which is IMHO not very useful).
+    #[cfg(target_os = "zkvm")]
+    #[inline(always)]
+    #[must_use]
+    pub fn wrapping_shl(mut self, rhs: usize) -> Self {
+        if BITS == 256 {
+            if rhs >= 256 {
+                return Self::ZERO;
+            }
+            use crate::support::zkvm::wrapping_shl_impl;
+            let rhs = rhs as u64;
+            unsafe {
+                wrapping_shl_impl(self.limbs.as_ptr(), [rhs].as_ptr(), self.limbs.as_mut_ptr());
+            }
+            self
+        } else {
+            self.overflowing_shl(rhs).0
+        }
     }
 
     /// Checked right shift by `rhs` bits.
@@ -344,13 +370,43 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note: This differs from [`u64::wrapping_shr`] which first reduces `rhs`
     /// by `BITS` (which is IMHO not very useful).
+    #[cfg(not(target_os = "zkvm"))]
     #[inline(always)]
     #[must_use]
     pub fn wrapping_shr(self, rhs: usize) -> Self {
         self.overflowing_shr(rhs).0
     }
 
+    /// Right shift by `rhs` bits.
+    ///
+    /// $$
+    /// \mathtt{wrapping\\_shr}(\mathtt{self}, \mathtt{rhs}) =
+    /// \floor{\frac{\mathtt{self}}{2^{\mathtt{rhs}}}}
+    /// $$
+    ///
+    /// Note: This differs from [`u64::wrapping_shr`] which first reduces `rhs`
+    /// by `BITS` (which is IMHO not very useful).
+    #[cfg(target_os = "zkvm")]
+    #[inline(always)]
+    #[must_use]
+    pub fn wrapping_shr(mut self, rhs: usize) -> Self {
+        if BITS == 256 {
+            if rhs >= 256 {
+                return Self::ZERO;
+            }
+            use crate::support::zkvm::wrapping_shr_impl;
+            let rhs = rhs as u64;
+            unsafe {
+                wrapping_shr_impl(self.limbs.as_ptr(), [rhs].as_ptr(), self.limbs.as_mut_ptr());
+            }
+            self
+        } else {
+            self.overflowing_shr(rhs).0
+        }
+    }
+
     /// Arithmetic shift right by `rhs` bits.
+    #[cfg(not(target_os = "zkvm"))]
     #[inline]
     #[must_use]
     pub fn arithmetic_shr(self, rhs: usize) -> Self {
@@ -363,6 +419,32 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             r |= Self::MAX << BITS.saturating_sub(rhs);
         }
         r
+    }
+
+    /// Arithmetic shift right by `rhs` bits.
+    #[cfg(target_os = "zkvm")]
+    #[inline]
+    #[must_use]
+    pub fn arithmetic_shr(mut self, rhs: usize) -> Self {
+        if BITS == 256 {
+            let rhs = if rhs >= 256 { 255 } else { rhs };
+            use crate::support::zkvm::arithmetic_shr_impl;
+            let rhs = rhs as u64;
+            unsafe {
+                arithmetic_shr_impl(self.limbs.as_ptr(), [rhs].as_ptr(), self.limbs.as_mut_ptr());
+            }
+            self
+        } else {
+            if BITS == 0 {
+                return Self::ZERO;
+            }
+            let sign = self.bit(BITS - 1);
+            let mut r = self >> rhs;
+            if sign {
+                r |= Self::MAX << BITS.saturating_sub(rhs);
+            }
+            r
+        }
     }
 
     /// Shifts the bits to the left by a specified amount, `rhs`, wrapping the
@@ -394,6 +476,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
     type Output = Self;
 
+    #[cfg(not(target_os = "zkvm"))]
     #[inline]
     fn not(mut self) -> Self::Output {
         if BITS == 0 {
@@ -404,6 +487,31 @@ impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
         }
         self.limbs[LIMBS - 1] &= Self::MASK;
         self
+    }
+
+    #[cfg(target_os = "zkvm")]
+    #[inline(always)]
+    fn not(mut self) -> Self::Output {
+        use crate::support::zkvm::wrapping_sub_impl;
+        if BITS == 256 {
+            unsafe {
+                wrapping_sub_impl(
+                    Self::MAX.limbs.as_ptr(),
+                    self.limbs.as_ptr(),
+                    self.limbs.as_mut_ptr(),
+                );
+            }
+            self
+        } else {
+            if BITS == 0 {
+                return Self::ZERO;
+            }
+            for limb in &mut self.limbs {
+                *limb = u64::not(*limb);
+            }
+            self.limbs[LIMBS - 1] &= Self::MASK;
+            self
+        }
     }
 }
 
@@ -417,7 +525,7 @@ impl<const BITS: usize, const LIMBS: usize> Not for &Uint<BITS, LIMBS> {
 }
 
 macro_rules! impl_bit_op {
-    ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident) => {
+    ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident, $fn_zkvm_impl:ident) => {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
@@ -430,10 +538,24 @@ macro_rules! impl_bit_op {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<&Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
+            #[cfg(not(target_os = "zkvm"))]
             #[inline]
             fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
                 for i in 0..LIMBS {
                     u64::$fn_assign(&mut self.limbs[i], rhs.limbs[i]);
+                }
+            }
+
+            #[cfg(target_os = "zkvm")]
+            #[inline(always)]
+            fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
+                use crate::support::zkvm::$fn_zkvm_impl;
+                unsafe {
+                    $fn_zkvm_impl(
+                        self.limbs.as_ptr(),
+                        rhs.limbs.as_ptr(),
+                        self.limbs.as_mut_ptr(),
+                    );
                 }
             }
         }
@@ -487,9 +609,9 @@ macro_rules! impl_bit_op {
     };
 }
 
-impl_bit_op!(BitOr, bitor, BitOrAssign, bitor_assign);
-impl_bit_op!(BitAnd, bitand, BitAndAssign, bitand_assign);
-impl_bit_op!(BitXor, bitxor, BitXorAssign, bitxor_assign);
+impl_bit_op!(BitOr, bitor, BitOrAssign, bitor_assign, bitor_impl);
+impl_bit_op!(BitAnd, bitand, BitAndAssign, bitand_assign, bitand_impl);
+impl_bit_op!(BitXor, bitxor, BitXorAssign, bitxor_assign, bitxor_impl);
 
 impl<const BITS: usize, const LIMBS: usize> Shl<Self> for Uint<BITS, LIMBS> {
     type Output = Self;
