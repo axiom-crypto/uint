@@ -143,23 +143,72 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `self + rhs`, wrapping around at the boundary of the type.
+    #[cfg(not(target_os = "zkvm"))]
     #[inline(always)]
     #[must_use]
     pub const fn wrapping_add(self, rhs: Self) -> Self {
         self.overflowing_add(rhs).0
     }
 
+    /// Computes `self + rhs`, wrapping around at the boundary of the type.
+    #[cfg(target_os = "zkvm")]
+    #[inline(always)]
+    #[must_use]
+    pub fn wrapping_add(mut self, rhs: Self) -> Self {
+        use crate::support::zkvm::zkvm_u256_wrapping_add_impl;
+        if BITS == 256 {
+            unsafe {
+                zkvm_u256_wrapping_add_impl(
+                    self.limbs.as_mut_ptr() as *mut u8,
+                    self.limbs.as_ptr() as *const u8,
+                    rhs.limbs.as_ptr() as *const u8,
+                );
+            }
+            return self;
+        }
+        self.overflowing_add(rhs).0
+    }
+
     /// Computes `-self`, wrapping around at the boundary of the type.
+    #[cfg(not(target_os = "zkvm"))]
     #[inline(always)]
     #[must_use]
     pub const fn wrapping_neg(self) -> Self {
         self.overflowing_neg().0
     }
 
+    /// Computes `-self`, wrapping around at the boundary of the type.
+    #[cfg(target_os = "zkvm")]
+    #[inline(always)]
+    #[must_use]
+    pub fn wrapping_neg(self) -> Self {
+        Self::ZERO.wrapping_sub(self)
+    }
+
     /// Computes `self - rhs`, wrapping around at the boundary of the type.
+    #[cfg(not(target_os = "zkvm"))]
     #[inline(always)]
     #[must_use]
     pub const fn wrapping_sub(self, rhs: Self) -> Self {
+        self.overflowing_sub(rhs).0
+    }
+
+    /// Computes `self - rhs`, wrapping around at the boundary of the type.
+    #[cfg(target_os = "zkvm")]
+    #[inline(always)]
+    #[must_use]
+    pub fn wrapping_sub(mut self, rhs: Self) -> Self {
+        use crate::support::zkvm::zkvm_u256_wrapping_sub_impl;
+        if BITS == 256 {
+            unsafe {
+                zkvm_u256_wrapping_sub_impl(
+                    self.limbs.as_mut_ptr() as *mut u8,
+                    self.limbs.as_ptr() as *const u8,
+                    rhs.limbs.as_ptr() as *const u8,
+                );
+            }
+            return self;
+        }
         self.overflowing_sub(rhs).0
     }
 }
