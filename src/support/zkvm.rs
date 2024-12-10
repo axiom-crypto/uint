@@ -1,11 +1,13 @@
-/// This file allows users to define more efficient native implementations for the zkvm target
-/// which can be used to speed up the operations on [Uint]'s.
+/// This file allows users to define more efficient native implementations for
+/// the zkvm target which can be used to speed up the operations on [Uint]'s.
 ///
-/// The functions defined here are not meant to be used by the user, but rather to be used by the
-/// library to define more efficient native implementations for the zkvm target.
+/// The functions defined here are not meant to be used by the user, but rather
+/// to be used by the library to define more efficient native implementations
+/// for the zkvm target.
 ///
-/// Currently these functions are specified to support only 256 bit [Uint]'s and take pointers to
-/// the limbs `[u64;4]` as arguments. Providing other sizes will result in an undefined behavior.
+/// Currently these functions are specified to support only 256 bit [Uint]'s and
+/// take pointers to the limbs `[u64;4]` as arguments. Providing other sizes
+/// will result in an undefined behavior.
 use core::{cmp::Ordering, mem::MaybeUninit};
 
 use crate::Uint;
