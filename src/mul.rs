@@ -58,6 +58,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `self * rhs`, wrapping around at the boundary of the type.
+    #[cfg(not(target_os = "zkvm"))]
     #[inline(always)]
     #[must_use]
     pub fn wrapping_mul(self, rhs: Self) -> Self {
@@ -67,6 +68,25 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             result.limbs[LIMBS - 1] &= Self::MASK;
         }
         result
+    }
+
+    /// Computes `self * rhs`, wrapping around at the boundary of the type.
+    #[cfg(target_os = "zkvm")]
+    #[inline(always)]
+    #[must_use]
+    pub fn wrapping_mul(mut self, rhs: Self) -> Self {
+        use crate::support::zkvm::wrapping_mul_impl;
+        if BITS == 256 {
+            unsafe {
+                wrapping_mul_impl(
+                    self.limbs.as_ptr(),
+                    rhs.limbs.as_ptr(),
+                    self.limbs.as_mut_ptr(),
+                );
+            }
+            return self;
+        }
+        self.overflowing_mul(rhs).0
     }
 
     /// Computes the inverse modulo $2^{\mathtt{BITS}}$ of `self`, returning
