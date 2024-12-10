@@ -24,6 +24,8 @@ pub mod sqlx;
 pub mod ssz;
 mod valuable;
 mod zeroize;
+#[cfg(target_os = "zkvm")]
+pub mod zkvm;
 
 // FEATURE: Support for many more traits and crates.
 // * https://crates.io/crates/der
