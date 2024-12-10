@@ -20,7 +20,7 @@ impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
     fn cmp(&self, rhs: &Self) -> Ordering {
         use crate::support::zkvm::cmp_impl;
         if BITS == 256 {
-            return unsafe { cmp_impl(self.limbs.as_ptr(), rhs.limbs.as_ptr()) }
+            return unsafe { cmp_impl(self.limbs.as_ptr(), rhs.limbs.as_ptr()) };
         }
         self.cmp(rhs)
     }

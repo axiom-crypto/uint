@@ -1,4 +1,4 @@
-/// This file allows users to define more efficient native implementations for the zkvm target 
+/// This file allows users to define more efficient native implementations for the zkvm target
 /// which can be used to speed up the operations on [Uint]'s.
 ///
 /// The functions defined here are not meant to be used by the user, but rather to be used by the
@@ -6,7 +6,6 @@
 ///
 /// Currently these functions are specified to support only 256 bit [Uint]'s and take pointers to
 /// the limbs `[u64;4]` as arguments. Providing other sizes will result in an undefined behavior.
-
 use core::{cmp::Ordering, mem::MaybeUninit};
 
 use crate::Uint;
@@ -34,7 +33,7 @@ extern "C" {
     pub fn eq_impl(a: *const u64, b: *const u64) -> bool;
     /// Compare two 256-bit numbers.
     pub fn cmp_impl(a: *const u64, b: *const u64) -> Ordering;
-    /// Clone a 256-bit number into `result`. `zero` has to 
+    /// Clone a 256-bit number into `result`. `zero` has to
     pub fn clone_impl(a: *const u64, zero: *const u64, result: *mut u64);
 }
 

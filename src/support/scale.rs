@@ -149,7 +149,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> Encode for CompactRefUint<'a, BI
 /// Prefix another input with a byte.
 struct PrefixInput<'a, T> {
     prefix: Option<u8>,
-    input:  &'a mut T,
+    input: &'a mut T,
 }
 
 impl<'a, T: 'a + Input> Input for PrefixInput<'a, T> {
