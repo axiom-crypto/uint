@@ -6,7 +6,7 @@
 /// for the zkvm target.
 ///
 /// Currently these functions are specified to support only 256 bit [Uint]'s and
-/// take pointers to the limbs `[u64;4]` as arguments. Providing other sizes
+/// take pointers to their limbs as arguments. Providing other sizes
 /// will result in an undefined behavior.
 use core::{cmp::Ordering, mem::MaybeUninit};
 
@@ -14,29 +14,29 @@ use crate::Uint;
 
 extern "C" {
     /// Add two 256-bit numbers and store in `result`.
-    pub fn wrapping_add_impl(a: *const u64, b: *const u64, result: *mut u64);
+    pub fn wrapping_add_impl(result: *mut u8, a: *const u8, b: *const u8);
     /// Subtract two 256-bit numbers and store in `result`.
-    pub fn wrapping_sub_impl(a: *const u64, b: *const u64, result: *mut u64);
+    pub fn wrapping_sub_impl(result: *mut u8, a: *const u8, b: *const u8);
     /// Multiply two 256-bit numbers and store in `result`.
-    pub fn wrapping_mul_impl(a: *const u64, b: *const u64, result: *mut u64);
+    pub fn wrapping_mul_impl(result: *mut u8, a: *const u8, b: *const u8);
     /// Bitwise XOR two 256-bit numbers and store in `result`.
-    pub fn bitxor_impl(a: *const u64, b: *const u64, result: *mut u64);
+    pub fn bitxor_impl(result: *mut u8, a: *const u8, b: *const u8);
     /// Bitwise AND two 256-bit numbers and store in `result`.
-    pub fn bitand_impl(a: *const u64, b: *const u64, result: *mut u64);
+    pub fn bitand_impl(result: *mut u8, a: *const u8, b: *const u8);
     /// Bitwise OR two 256-bit numbers and store in `result`.
-    pub fn bitor_impl(a: *const u64, b: *const u64, result: *mut u64);
+    pub fn bitor_impl(result: *mut u8, a: *const u8, b: *const u8);
     /// Shift left two 256-bit numbers and store in `result`.
-    pub fn wrapping_shl_impl(a: *const u64, b: *const u64, result: *mut u64);
+    pub fn wrapping_shl_impl(result: *mut u8, a: *const u8, b: *const u8);
     /// Shift right two 256-bit numbers and store in `result`.
-    pub fn wrapping_shr_impl(a: *const u64, b: *const u64, result: *mut u64);
+    pub fn wrapping_shr_impl(result: *mut u8, a: *const u8, b: *const u8);
     /// Arithmetic shift right two 256-bit numbers and store in `result`.
-    pub fn arithmetic_shr_impl(a: *const u64, b: *const u64, result: *mut u64);
+    pub fn arithmetic_shr_impl(result: *mut u8, a: *const u8, b: *const u8);
     /// Check if two 256-bit numbers are equal.
-    pub fn eq_impl(a: *const u64, b: *const u64) -> bool;
+    pub fn eq_impl(a: *const u8, b: *const u8) -> bool;
     /// Compare two 256-bit numbers.
-    pub fn cmp_impl(a: *const u64, b: *const u64) -> Ordering;
+    pub fn cmp_impl(a: *const u8, b: *const u8) -> Ordering;
     /// Clone a 256-bit number into `result`. `zero` has to
-    pub fn clone_impl(a: *const u64, zero: *const u64, result: *mut u64);
+    pub fn clone_impl(result: *mut u8, a: *const u8, zero: *const u8);
 }
 
 impl<const BITS: usize, const LIMBS: usize> Copy for Uint<BITS, LIMBS> {}
@@ -47,9 +47,9 @@ impl<const BITS: usize, const LIMBS: usize> Clone for Uint<BITS, LIMBS> {
             let mut uninit: MaybeUninit<Self> = MaybeUninit::uninit();
             unsafe {
                 clone_impl(
-                    self.limbs.as_ptr(),
-                    Self::ZERO.limbs.as_ptr(),
-                    (*uninit.as_mut_ptr()).limbs.as_mut_ptr(),
+                    (*uninit.as_mut_ptr()).limbs.as_mut_ptr() as *mut u8,
+                    self.limbs.as_ptr() as *const u8,
+                    Self::ZERO.limbs.as_ptr() as *const u8,
                 );
             }
             return unsafe { uninit.assume_init() };
@@ -61,7 +61,12 @@ impl<const BITS: usize, const LIMBS: usize> Clone for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> PartialEq for Uint<BITS, LIMBS> {
     fn eq(&self, other: &Self) -> bool {
         if BITS == 256 {
-            unsafe { eq_impl(self.limbs.as_ptr(), other.limbs.as_ptr()) }
+            unsafe {
+                eq_impl(
+                    self.limbs.as_ptr() as *const u8,
+                    other.limbs.as_ptr() as *const u8,
+                )
+            }
         } else {
             self.limbs == other.limbs
         }

@@ -333,7 +333,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             use crate::support::zkvm::wrapping_shl_impl;
             let rhs = rhs as u64;
             unsafe {
-                wrapping_shl_impl(self.limbs.as_ptr(), [rhs].as_ptr(), self.limbs.as_mut_ptr());
+                wrapping_shl_impl(
+                    self.limbs.as_mut_ptr() as *mut u8,
+                    self.limbs.as_ptr() as *const u8,
+                    [rhs].as_ptr() as *const u8,
+                );
             }
             self
         } else {
@@ -445,7 +449,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             use crate::support::zkvm::wrapping_shr_impl;
             let rhs = rhs as u64;
             unsafe {
-                wrapping_shr_impl(self.limbs.as_ptr(), [rhs].as_ptr(), self.limbs.as_mut_ptr());
+                wrapping_shr_impl(
+                    self.limbs.as_mut_ptr() as *mut u8,
+                    self.limbs.as_ptr() as *const u8,
+                    [rhs].as_ptr() as *const u8,
+                );
             }
             self
         } else {
@@ -479,7 +487,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             use crate::support::zkvm::arithmetic_shr_impl;
             let rhs = rhs as u64;
             unsafe {
-                arithmetic_shr_impl(self.limbs.as_ptr(), [rhs].as_ptr(), self.limbs.as_mut_ptr());
+                arithmetic_shr_impl(
+                    self.limbs.as_mut_ptr() as *mut u8,
+                    self.limbs.as_ptr() as *const u8,
+                    [rhs].as_ptr() as *const u8,
+                );
             }
             self
         } else {
@@ -544,9 +556,9 @@ impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
         if BITS == 256 {
             unsafe {
                 wrapping_sub_impl(
-                    Self::MAX.limbs.as_ptr(),
-                    self.limbs.as_ptr(),
-                    self.limbs.as_mut_ptr(),
+                    self.limbs.as_mut_ptr() as *mut u8,
+                    Self::MAX.limbs.as_ptr() as *const u8,
+                    self.limbs.as_ptr() as *const u8,
                 );
             }
             self
@@ -600,9 +612,9 @@ macro_rules! impl_bit_op {
                 use crate::support::zkvm::$fn_zkvm_impl;
                 unsafe {
                     $fn_zkvm_impl(
-                        self.limbs.as_ptr(),
-                        rhs.limbs.as_ptr(),
-                        self.limbs.as_mut_ptr(),
+                        self.limbs.as_mut_ptr() as *mut u8,
+                        self.limbs.as_ptr() as *const u8,
+                        rhs.limbs.as_ptr() as *const u8,
                     );
                 }
             }

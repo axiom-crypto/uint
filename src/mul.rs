@@ -79,9 +79,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if BITS == 256 {
             unsafe {
                 wrapping_mul_impl(
-                    self.limbs.as_ptr(),
-                    rhs.limbs.as_ptr(),
-                    self.limbs.as_mut_ptr(),
+                    self.limbs.as_mut_ptr() as *mut u8,
+                    self.limbs.as_ptr() as *const u8,
+                    rhs.limbs.as_ptr() as *const u8,
                 );
             }
             return self;
