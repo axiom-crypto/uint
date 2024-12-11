@@ -299,10 +299,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             if rhs >= 256 {
                 return Self::ZERO;
             }
-            use crate::support::zkvm::wrapping_shl_impl;
+            use crate::support::zkvm::zkvm_u256_wrapping_shl_impl;
             let rhs = rhs as u64;
             unsafe {
-                wrapping_shl_impl(
+                zkvm_u256_wrapping_shl_impl(
                     self.limbs.as_mut_ptr() as *mut u8,
                     self.limbs.as_ptr() as *const u8,
                     [rhs].as_ptr() as *const u8,
@@ -398,10 +398,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             if rhs >= 256 {
                 return Self::ZERO;
             }
-            use crate::support::zkvm::wrapping_shr_impl;
+            use crate::support::zkvm::zkvm_u256_wrapping_shr_impl;
             let rhs = rhs as u64;
             unsafe {
-                wrapping_shr_impl(
+                zkvm_u256_wrapping_shr_impl(
                     self.limbs.as_mut_ptr() as *mut u8,
                     self.limbs.as_ptr() as *const u8,
                     [rhs].as_ptr() as *const u8,
@@ -436,10 +436,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn arithmetic_shr(mut self, rhs: usize) -> Self {
         if BITS == 256 {
             let rhs = if rhs >= 256 { 255 } else { rhs };
-            use crate::support::zkvm::arithmetic_shr_impl;
+            use crate::support::zkvm::zkvm_u256_arithmetic_shr_impl;
             let rhs = rhs as u64;
             unsafe {
-                arithmetic_shr_impl(
+                zkvm_u256_arithmetic_shr_impl(
                     self.limbs.as_mut_ptr() as *mut u8,
                     self.limbs.as_ptr() as *const u8,
                     [rhs].as_ptr() as *const u8,
@@ -504,10 +504,10 @@ impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
     #[cfg(target_os = "zkvm")]
     #[inline(always)]
     fn not(mut self) -> Self::Output {
-        use crate::support::zkvm::wrapping_sub_impl;
+        use crate::support::zkvm::zkvm_u256_wrapping_sub_impl;
         if BITS == 256 {
             unsafe {
-                wrapping_sub_impl(
+                zkvm_u256_wrapping_sub_impl(
                     self.limbs.as_mut_ptr() as *mut u8,
                     Self::MAX.limbs.as_ptr() as *const u8,
                     self.limbs.as_ptr() as *const u8,
@@ -621,9 +621,27 @@ macro_rules! impl_bit_op {
     };
 }
 
-impl_bit_op!(BitOr, bitor, BitOrAssign, bitor_assign, bitor_impl);
-impl_bit_op!(BitAnd, bitand, BitAndAssign, bitand_assign, bitand_impl);
-impl_bit_op!(BitXor, bitxor, BitXorAssign, bitxor_assign, bitxor_impl);
+impl_bit_op!(
+    BitOr,
+    bitor,
+    BitOrAssign,
+    bitor_assign,
+    zkvm_u256_bitor_impl
+);
+impl_bit_op!(
+    BitAnd,
+    bitand,
+    BitAndAssign,
+    bitand_assign,
+    zkvm_u256_bitand_impl
+);
+impl_bit_op!(
+    BitXor,
+    bitxor,
+    BitXorAssign,
+    bitxor_assign,
+    zkvm_u256_bitxor_impl
+);
 
 impl<const BITS: usize, const LIMBS: usize> Shl<Self> for Uint<BITS, LIMBS> {
     type Output = Self;

@@ -18,10 +18,10 @@ impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
     #[cfg(target_os = "zkvm")]
     #[inline]
     fn cmp(&self, rhs: &Self) -> Ordering {
-        use crate::support::zkvm::cmp_impl;
+        use crate::support::zkvm::zkvm_u256_cmp_impl;
         if BITS == 256 {
             return unsafe {
-                cmp_impl(
+                zkvm_u256_cmp_impl(
                     self.limbs.as_ptr() as *const u8,
                     rhs.limbs.as_ptr() as *const u8,
                 )

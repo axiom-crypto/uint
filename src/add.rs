@@ -155,10 +155,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline(always)]
     #[must_use]
     pub fn wrapping_add(mut self, rhs: Self) -> Self {
-        use crate::support::zkvm::wrapping_add_impl;
+        use crate::support::zkvm::zkvm_u256_wrapping_add_impl;
         if BITS == 256 {
             unsafe {
-                wrapping_add_impl(
+                zkvm_u256_wrapping_add_impl(
                     self.limbs.as_mut_ptr() as *mut u8,
                     self.limbs.as_ptr() as *const u8,
                     rhs.limbs.as_ptr() as *const u8,
@@ -198,10 +198,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline(always)]
     #[must_use]
     pub fn wrapping_sub(mut self, rhs: Self) -> Self {
-        use crate::support::zkvm::wrapping_sub_impl;
+        use crate::support::zkvm::zkvm_u256_wrapping_sub_impl;
         if BITS == 256 {
             unsafe {
-                wrapping_sub_impl(
+                zkvm_u256_wrapping_sub_impl(
                     self.limbs.as_mut_ptr() as *mut u8,
                     self.limbs.as_ptr() as *const u8,
                     rhs.limbs.as_ptr() as *const u8,

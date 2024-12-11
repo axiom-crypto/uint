@@ -75,10 +75,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline(always)]
     #[must_use]
     pub fn wrapping_mul(mut self, rhs: Self) -> Self {
-        use crate::support::zkvm::wrapping_mul_impl;
+        use crate::support::zkvm::zkvm_u256_wrapping_mul_impl;
         if BITS == 256 {
             unsafe {
-                wrapping_mul_impl(
+                zkvm_u256_wrapping_mul_impl(
                     self.limbs.as_mut_ptr() as *mut u8,
                     self.limbs.as_ptr() as *const u8,
                     rhs.limbs.as_ptr() as *const u8,
