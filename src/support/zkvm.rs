@@ -35,8 +35,8 @@ extern "C" {
     pub fn zkvm_u256_eq_impl(a: *const u8, b: *const u8) -> bool;
     /// Compare two 256-bit numbers.
     pub fn zkvm_u256_cmp_impl(a: *const u8, b: *const u8) -> Ordering;
-    /// Clone a 256-bit number into `result`. `zero` has to
-    pub fn zkvm_u256_clone_impl(result: *mut u8, a: *const u8, zero: *const u8);
+    /// Clone a 256-bit number into `result`.
+    pub fn zkvm_u256_clone_impl(result: *mut u8, a: *const u8);
 }
 
 impl<const BITS: usize, const LIMBS: usize> Copy for Uint<BITS, LIMBS> {}
@@ -49,7 +49,6 @@ impl<const BITS: usize, const LIMBS: usize> Clone for Uint<BITS, LIMBS> {
                 zkvm_u256_clone_impl(
                     (*uninit.as_mut_ptr()).limbs.as_mut_ptr() as *mut u8,
                     self.limbs.as_ptr() as *const u8,
-                    Self::ZERO.limbs.as_ptr() as *const u8,
                 );
             }
             return unsafe { uninit.assume_init() };
